@@ -686,6 +686,14 @@ if(PNG_SHARED)
                             PROPERTIES LINK_FLAGS "-Wl,-M -Wl,'${CMAKE_CURRENT_BINARY_DIR}/libpng.vers'")
     endif()
   endif()
+  if(DEFINED COMPARTMENT_POLICY)
+    target_link_options(png_shared
+                        PRIVATE "-Wl,--compartment-policy=${COMPARTMENT_POLICY}")
+  endif()
+  if(DEFINED COMPARTMENT_POLICY_FN)
+    target_compile_options(png_shared
+      PRIVATE "-ffunction-sections")
+  endif()
   if(APPLE)
     # Avoid CMake's implicit compile definition "png_shared_EXPORTS".
     set_target_properties(png_shared
