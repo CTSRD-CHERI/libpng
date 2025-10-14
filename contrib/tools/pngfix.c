@@ -17,6 +17,8 @@
 #include <limits.h>
 #include <errno.h>
 #include <assert.h>
+#include <signal.h>
+#include <unistd.h>
 
 #define implies(x,y) assert(!(x) || (y))
 
@@ -701,6 +703,8 @@ struct global
       /* The structure is shared across all uses of this global control
        * structure to avoid reallocation between IDAT streams.
        */
+
+  unsigned int   pause; /* Pause for SIGUSR1 before exit */
 };
 
 static int
@@ -709,6 +713,10 @@ global_end(struct global *global)
 
    int rc;
 
+   if (global->pause) {
+     kill(getpid(), SIGSTOP);
+   }
+   
    IDAT_list_end(&global->idat_cache);
    rc = global->status_code;
    CLEAR(*global);
@@ -730,6 +738,7 @@ global_init(struct global *global)
    global->optimize_zlib = 0;
    global->skip          = SKIP_NONE;
    global->status_code   = 0;
+   global->pause         = 0;
 
    IDAT_list_init(&global->idat_cache);
 }
@@ -3932,6 +3941,9 @@ main(int argc, const char **argv)
          else
             global.quiet = 1;
       }
+
+      else if (strcmp(*argv, "--pause") == 0)
+         global.pause = 1;
 
       else if (strcmp(*argv, "--verbose") == 0 || strcmp(*argv, "-v") == 0)
          ++global.verbose;
